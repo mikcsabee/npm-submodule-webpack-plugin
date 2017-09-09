@@ -10,8 +10,10 @@ describe('plugin', () => {
   let compiler;
   let plugin;
   let logs;
+  const spy = expect.spyOn(spawn, 'sync');
 
   beforeEach(function() {
+    spy.calls = [];                                   // reset spy
     logs = [];                                        // initialize variables.
     compiler = {};
     compiler.plugin = (hook, callback) => callback(); // default compiler.plugin calls the callback immediately.
@@ -35,30 +37,26 @@ describe('plugin', () => {
   });
 
   it('apply should loop commands', () => {
-    expect.spyOn(spawn, 'sync').andReturn({ stdout: 'command output' });  // fake the npm call
-    plugin.apply(compiler);                                               // call the npm commands ('npm install' and 'npm view).
-    expect(logs.length).toBe(2);                                          // verify that both command executed.
-    expect(logs[0]).toEqual('command output');                            // verify logs
+    spy.andReturn({ stdout: 'command output' });  // fake the npm call
+    plugin.apply(compiler);                       // call the npm commands ('npm install' and 'npm view).
+    expect(logs.length).toBe(2);                  // verify that both command executed.
+    expect(logs[0]).toEqual('command output');    // verify logs
     expect(logs[1]).toEqual('command output');
   });
 
   it('runCommand handle errors', () => {
-    const sync = expect.spyOn(spawn, 'sync').andReturn({ stderr: 'error message' });  // fake the npm call
-    sync.calls = [];                                                                  // reset calls
-    plugin.runCommand('command');                                                     // execute command
-    expect(logs.length).toBe(1);                                                      // verify log
+    spy.andReturn({ stderr: 'error message' });                     // fake the npm call
+    plugin.runCommand('command');                                   // execute command
+    expect(logs.length).toBe(1);                                    // verify log
     expect(logs[0]).toEqual('error message');
-    expect(sync.calls[0].arguments[0]).toEqual('npm');                                // verify spawn call
-    expect(sync.calls[0].arguments[1]).toEqual(['run', 'command']);
   });
 
   it('runCommand calls cross-spawn properly', () => {
-    const sync = expect.spyOn(spawn, 'sync').andReturn({});         // fake the npm call
-    sync.calls = [];                                                // reset calls
+    spy.andReturn({});                                              // fake the npm call
     plugin.runCommand('command');                                   // execute command
     expect(logs.length).toBe(0);                                    // verify log
-    expect(sync.calls[0].arguments[0]).toEqual('npm');              // arguments
-    expect(sync.calls[0].arguments[1]).toEqual(['run', 'command']); 
+    expect(spy.calls[0].arguments[0]).toEqual('npm');               // arguments
+    expect(spy.calls[0].arguments[1]).toEqual(['run', 'command']); 
   });
 
   it('getArguemts parses command with argument into array', () => {
