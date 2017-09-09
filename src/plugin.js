@@ -80,7 +80,13 @@ NpmSubmodulePlugin.prototype.apply = function(compiler) {
 NpmSubmodulePlugin.prototype.runCommand = function(command) {
   const args = this.getArguemts(command);                         // create npm argument array
   const result = spawn.sync('npm', args,  this.spawnSyncOptions); // execute the command
-  const output = result.stdout.toString('utf8');                  // parse the output into string
+  let output = undefined;
+  if(result.stdout) {
+    output = result.stdout.toString('utf8');                      // parse the output into string
+  } else if(result.stderr) {
+    output = result.stderr.toString('utf8');                      // parse the output into string
+    console.error(output);
+  }
   this.logger(output);                                            // log the output
 }
 
