@@ -1,6 +1,5 @@
-const fs = require('fs');
 const expect = require('expect');
-const rimraf = require('rimraf');
+const spawn = require('cross-spawn');
 
 const NpmSubmodulePlugin = require('../src/plugin');
 
@@ -13,7 +12,6 @@ describe('plugin', () => {
   let logs;
 
   beforeEach(function() {
-    rimraf.sync(path);                                // clean the folder where 'npm install' executes.
     logs = [];                                        // initialize variables.
     compiler = {};
     compiler.plugin = (hook, callback) => callback(); // default compiler.plugin calls the callback immediately.
@@ -26,7 +24,7 @@ describe('plugin', () => {
 
   it('default logger should be exist', () => {
     plugin = new NpmSubmodulePlugin({module: '', commands: []});  // create a plugin without defining a logger.
-    expect(plugin.logger).toBeDefined();                          // verify that the logger created.
+    expect(plugin.logger).toExist();                              // verify that the logger created.
   });
 
   it('apply should hook into `done`', () => {
@@ -36,14 +34,32 @@ describe('plugin', () => {
     expect(hook).toBe('done');          // verify that the hook is 'done'.
   });
 
-  it('apply should loop commands', (done) => {
-    expect(fs.existsSync(path)).toBe(false);        // make sure that the node_modules folder is not exists.
-    plugin.apply(compiler);                         // call the npm commands ('npm install' and 'npm view).
-    expect(logs.length).toBe(2);                    // verify that both command executed.
-    expect(fs.existsSync(path)).toBe(true);         // verify that the 'npm install' invoked and the node_modules folder created.
-    expect(logs[1]).toContain("name: 'isobject'");  // verify that the 'npm view' returned a correct output to the logger.
-    done();
-  }).timeout(30 * 1000);                            // 'npm install' takes a lot of time.
+  it('apply should loop commands', () => {
+    expect.spyOn(spawn, 'sync').andReturn({ stdout: 'command output' });  // fake the npm call
+    plugin.apply(compiler);                                               // call the npm commands ('npm install' and 'npm view).
+    expect(logs.length).toBe(2);                                          // verify that both command executed.
+    expect(logs[0]).toEqual('command output');                            // verify logs
+    expect(logs[1]).toEqual('command output');
+  });
+
+  it('runCommand handle errors', () => {
+    const sync = expect.spyOn(spawn, 'sync').andReturn({ stderr: 'error message' });  // fake the npm call
+    sync.calls = [];                                                                  // reset calls
+    plugin.runCommand('command');                                                     // execute command
+    expect(logs.length).toBe(1);                                                      // verify log
+    expect(logs[0]).toEqual('error message');
+    expect(sync.calls[0].arguments[0]).toEqual('npm');                                // verify spawn call
+    expect(sync.calls[0].arguments[1]).toEqual(['run', 'command']);
+  });
+
+  it('runCommand calls cross-spawn properly', () => {
+    const sync = expect.spyOn(spawn, 'sync').andReturn({});         // fake the npm call
+    sync.calls = [];                                                // reset calls
+    plugin.runCommand('command');                                   // execute command
+    expect(logs.length).toBe(0);                                    // verify log
+    expect(sync.calls[0].arguments[0]).toEqual('npm');              // arguments
+    expect(sync.calls[0].arguments[1]).toEqual(['run', 'command']); 
+  });
 
   it('getArguemts parses command with argument into array', () => {
     const input = 'install --save react';                  // create input (command with argument).

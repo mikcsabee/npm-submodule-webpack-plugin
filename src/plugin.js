@@ -80,14 +80,10 @@ NpmSubmodulePlugin.prototype.apply = function(compiler) {
 NpmSubmodulePlugin.prototype.runCommand = function(command) {
   const args = this.getArguemts(command);                         // create npm argument array
   const result = spawn.sync('npm', args,  this.spawnSyncOptions); // execute the command
-  let output = undefined;
-  if(result.stdout) {
-    output = result.stdout.toString('utf8');                      // parse the output into string
-  } else if(result.stderr) {
-    output = result.stderr.toString('utf8');                      // parse the output into string
-    console.error(output);
+  const output = this.getOutput(result)                           // handle thr result
+  if(output) {                                                    // if output exists
+    this.logger(output);                                          // log the output
   }
-  this.logger(output);                                            // log the output
 }
 
 /**
@@ -108,6 +104,23 @@ NpmSubmodulePlugin.prototype.getArguemts = function(command) {
     return [command];
   }
   return ['run', command];            // else -> convert to an array and add 'run' to index 0
+}
+
+/**
+ * Tries to parse the stdout into UTF-8 string if it exist. If it not exists then tries the same with the stderr.
+ * If none of them exist resutns null.
+ * @param {Objet} result - the output of the spawn.sync.
+ * @param {string} result.stdout
+ * @param {string} result.stderr
+ * @returns {string|null} output
+ */
+NpmSubmodulePlugin.prototype.getOutput = function(result) {
+  if(result.stdout) {
+    return result.stdout.toString('utf8');                      // parse the output into string
+  } else if(result.stderr) {
+    return result.stderr.toString('utf8');                      // parse the output into string
+  }
+  return null;
 }
 
 module.exports = NpmSubmodulePlugin;
