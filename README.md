@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mikcsabee/npm-submodule-webpack-plugin.svg?branch=master)](https://travis-ci.org/mikcsabee/npm-submodule-webpack-plugin)
+
 <div align="center">
   <!-- replace with accurate logo e.g from https://worldvectorlogo.com/ -->
   <a href="https://github.com/webpack/webpack">
