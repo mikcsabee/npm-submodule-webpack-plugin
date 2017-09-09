@@ -47,7 +47,7 @@ var NpmSubmodulePlugin = require("npm-submodule-webpack-plugin");
         'install',
         'compile'
       ]
-    });
+    })
   ]
 ```
 
@@ -63,7 +63,7 @@ By default, the plugins use the `console.log` method to log the output of the co
         'compile'
       ],
       logger: my-logger-method
-    });
+    })
   ]
 ```
 
@@ -76,6 +76,6 @@ Working with arguments:
       commands: [
         'install --save react'
       ]
-    });
+    })
   ]
 ```

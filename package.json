@@ -1,6 +1,6 @@
 {
   "name": "npm-submodule-webpack-plugin",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Webpack plugin to handle submodule npm commands",
   "main": "index.js",
   "engines": {
