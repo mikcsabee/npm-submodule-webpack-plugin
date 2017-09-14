@@ -29,8 +29,8 @@ Let say that you have something similar in your `package.json`:
 And you would like to run the following npm commands in the `node_modules/myproject` folder:
 
 ```bash
-$ npm install
 $ npm run compile
+$ npm run dist
 ```
 
 Then you need to add the following lines into your  `webpack.config.js`:
@@ -43,13 +43,15 @@ var NpmSubmodulePlugin = require("npm-submodule-webpack-plugin");
   plugins: [
     new NpmSubmodulePlugin({
       module: 'myproject',
+      autoInstall: true,
       commands: [
-        'install',
-        'compile'
+        'compile',
+        'dist'
       ]
     })
   ]
 ```
+The `autoInstall` field allows the plugin to run `npm install` if the `node_modules` folder is not exists. This is a `boolean` field, and `false` by default. 
 
 By default, the plugins use the `console.log` method to log the output of the command, but it is possible, to use a custom logger:
 

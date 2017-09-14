@@ -10,6 +10,7 @@
 
 const spawn = require('cross-spawn');
 const path = require('path');
+const fs = require('fs');
 
 /** 
  * Standard npm commands.
@@ -39,6 +40,7 @@ const npmCommands = [
  * @example 
  * new NpmSubmodulePlugin({
  *   module: 'isObject',
+ *   autoInstall: false,
  *   commands: [
  *     'install',
  *     'install --save react'
@@ -47,18 +49,21 @@ const npmCommands = [
  * });
  * @param {Object} options - The plugin options
  * @param {string} options.module - The node module to operate on.
- * @param {string[]} options.commands - The commands to execute
+ * @param {boolean} [options.autoInstall=false] - Adds `npm install` to the commands if the `node_modules` folder is not exists.
+ * @param {string[]} [options.commands=[]] - The commands to execute.
  * @param {Logger} [options.logger=console.log] - The logger.
  * @class
  */
 function NpmSubmodulePlugin(options) {
   // initialize instance variables
-  this.commands = options.commands;
+  this.commands = options.commands ? options.commands : [];
+  this.autoInstall = options.autoInstall ? options.autoInstall : false;
+  this.logger = options.logger ? options.logger : console.log;
+  this.path = 'node_modules' + path.sep + options.module;
   this.spawnSyncOptions = {
     stdio: ['ignore', 'pipe', 'inherit'],
-    cwd: 'node_modules' + path.sep + options.module
+    cwd: path
   };
-  this.logger = options.logger ? options.logger : console.log;
 }
 
 /**
@@ -66,11 +71,12 @@ function NpmSubmodulePlugin(options) {
  * @param {Object} compiler - Webpack compiler
  */
 NpmSubmodulePlugin.prototype.apply = function(compiler) {
-  compiler.plugin('done', () =>       // Hook into 'done'
-    this.commands.forEach(command =>  // for every command
-      this.runCommand(command)        // run runCommand
-    )
-  );
+  compiler.plugin('done', () => {      // hook into 'done'
+    this.handleAutoInstall();          // add 'install' if necessary
+    this.commands.forEach(command =>   // for every command
+      this.runCommand(command)         // run runCommand
+    );
+  });
 }
 
 /**
@@ -121,6 +127,16 @@ NpmSubmodulePlugin.prototype.getOutput = function(result) {
     return result.stderr.toString('utf8');                      // parse the output into string
   }
   return null;
+}
+
+/**
+ * Handles the `autoInstall` option. If the `autoInstall` is true and if the node_modules doesn't exists 
+ * adds 'install' to the begining of the commands.
+ */
+NpmSubmodulePlugin.prototype.handleAutoInstall = function() {
+  if (this.autoInstall && !fs.existsSync(this.path + path.sep + 'node_modules')) {
+    this.commands.unshift("install");
+  }
 }
 
 module.exports = NpmSubmodulePlugin;
