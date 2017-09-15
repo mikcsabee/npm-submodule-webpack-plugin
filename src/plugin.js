@@ -4,7 +4,6 @@
  * @name npm-submodule-webpack-plugin
  * @desc Executes npm commands in a node_modules module.
  * @author Csaba Miklos
- * @version 0.0.1
  * @license MIT
  */
 
@@ -62,7 +61,7 @@ function NpmSubmodulePlugin(options) {
   this.path = 'node_modules' + path.sep + options.module;
   this.spawnSyncOptions = {
     stdio: ['ignore', 'pipe', 'inherit'],
-    cwd: path
+    cwd: this.path
   };
 }
 
